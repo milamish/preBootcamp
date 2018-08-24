@@ -1,0 +1,21 @@
+language: python
+
+python:
+  - '3.4'
+services:
+  - postgresql
+install:
+  - pip install -r requirements.txt
+  - pip install pytest-cov
+  - pip install coveralls
+before_script:
+  - cd API/api_v1/tests
+  - psql -c 'create database diary;' -U postgres
+script:
+  - pytest
+  - pytest --cov=.
+
+after_success:
+  - coveralls
+
+cache: pip
