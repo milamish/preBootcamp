@@ -8,12 +8,14 @@ from models import *
 users = Blueprint('users', __name__)
 
 class Users:
-	def __init__(self, name, username, emailadress, password, repeatpassword):
+	def __init__(self, name, username, emailadress, password, repeatpassword,message):
 		self.name = name
 		self.username = username
 		self.emailaddress = emailaddress
 		self.password = password
 		self.repeatpassword = repeatpassword
+		self.message=({"message":"unable to register"}),500
+
 
 	@users.route('/api/v1/auth/signup',methods=['POST'])
 	def signup():
