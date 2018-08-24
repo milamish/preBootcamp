@@ -1,11 +1,38 @@
 from flask import Flask, Blueprint, jsonify, request
 import psycopg2
 import re
+import hashlib
+import jwt
+import datetime
 
 from __init__ import *
 from models import *
 
 users = Blueprint('users', __name__)
+
+
+def tokens(k):
+    @wraps(k)
+    def decorators(*args, **kwargs):
+        token = request.args.get('token')
+        if not token:
+            return jsonify({'message' : 'Token is missing'})
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+        except:
+            return jsonify({'message' : 'Token is invalid'})
+        return k(*args, **kwargs)
+    return decorators
+
+		
+def pwhash(password):
+    return hashlib.sha256(str.encode(password)).hexdigest()
+
+def check_pwhash(password, hash):
+    if pwhash(password)==hash:
+        return True
+
+    return False
 
 class Users:
 	def __init__(self, name, username, emailadress, password, repeatpassword):
@@ -22,6 +49,8 @@ class Users:
 		emailaddress = request.get_json()['emailaddress'].strip()
 		password = request.get_json()['password'].strip()
 		repeatpassword = request.get_json()['repeatpassword'].strip()
+		phash=pwhash(password)
+
 		if not name:
 			return jsonify({"message":"you must provide a name"})
 		if not username:
@@ -49,7 +78,7 @@ class Users:
 		try:
 			with connection.cursor() as cursor:
 				sql="INSERT INTO users(name,emailaddress,password,username) VALUES\
-				('"+name+"','"+emailaddress+"','"+password+"','"+username+"');"
+				('"+name+"','"+emailaddress+"','"+str(phash)+"','"+username+"');"
 				cursor.execute("SELECT * FROM  users WHERE username='"+username+"';");
 				if cursor.fetchone() is not None:
 					return jsonify({"message":"username taken"}), 409
@@ -77,9 +106,13 @@ class Users:
 			cursor.execute(sql_log)
 			result=cursor.fetchone()
 			if result is None :
-				return jsonify({"message":"your username or password is wrong"})
+				return jsonify({"message":"your username is wrong"})
 			else:
-				return jsonify({"message":"succesfuly logged in"})
-				
+			
+				if check_pwhash(password, result[4]):
+					token=jwt.encode({'username':username,'user_id':result[0],'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)},app.config['SECRET_KEY'])
+					return jsonify({"message":"succesfuly logged in",'token':token.decode ('UTF-8')})
+				else:
+					return jsonify({'message':'invalid password'})
 		connection.commit()
 		return jsonify({"message":"check your login details"})
