@@ -7,7 +7,6 @@ import hashlib
 import jwt
 import datetime
 
-from flask_restful import Api, Resource
 from __init__ import *
 from models import *
 

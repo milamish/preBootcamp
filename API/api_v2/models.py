@@ -28,6 +28,8 @@ def table():
 		connection.commit()
 
 
+
+
 	
 
 		
