@@ -25,8 +25,6 @@ def tokens(k):
         return k(*args, **kwargs)
     return decorators
 
-<<<<<<< HEAD
-=======
 
 def tokens(k):
     @wraps(k)
@@ -41,31 +39,15 @@ def tokens(k):
         return k(*args, **kwargs)
     return decorators
 
->>>>>>> fc0f582ba4b9f8abe7fe67ae7a43edaa396fe031
-		
 def pwhash(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
 def check_pwhash(password, hash):
     if pwhash(password)==hash:
         return True
-<<<<<<< HEAD
-=======
-
+    
     return False
 
-class Users:
-	def __init__(self, name, username, emailadress, password, repeatpassword,message):
-		self.name = name
-		self.username = username
-		self.emailaddress = emailaddress
-		self.password = password
-		self.repeatpassword = repeatpassword
-		self.message=({"message":"unable to register"}),500
-
->>>>>>> fc0f582ba4b9f8abe7fe67ae7a43edaa396fe031
-
-    return False
 #this class allows a user to create an account by signing up
 class Register(Resource):
 	def post(self):
@@ -116,8 +98,7 @@ class Register(Resource):
 			return {"message":"unable to register!"}, 500
 		connection.commit()
 		return {"name":name, "emailaddress":emailaddress, "username":username}
-		#return jsonify(Register)
-
+		
 api.add_resource(Register,'/api/v1/auth/signup')
 
 #this class allows a user with an account to login
@@ -135,24 +116,16 @@ class Login(Resource):
 			cursor.execute(sql_log)
 			result=cursor.fetchone()
 			if result is None :
-<<<<<<< HEAD
+
 				return {"message":"your username is wrong"}
-=======
-				return jsonify({"message":"your username is wrong"})
->>>>>>> fc0f582ba4b9f8abe7fe67ae7a43edaa396fe031
 			else:
 			
 				if check_pwhash(password, result[4]):
 					token=jwt.encode({'username':username,'user_id':result[0],'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)},app.config['SECRET_KEY'])
-<<<<<<< HEAD
 					return {"message":"succesfuly logged in",'token':token.decode ('UTF-8')}
 				else:
 					return {'message':'invalid password'}
-=======
-					return jsonify({"message":"succesfuly logged in",'token':token.decode ('UTF-8')})
-				else:
-					return jsonify({'message':'invalid password'})
->>>>>>> fc0f582ba4b9f8abe7fe67ae7a43edaa396fe031
+					
 		connection.commit()
 		return {"message":"check your login details"}
 api.add_resource(Login, '/api/v1/auth/login')
