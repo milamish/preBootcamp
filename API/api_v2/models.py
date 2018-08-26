@@ -20,6 +20,7 @@ def table():
 		cursor.execute("CREATE TABLE IF NOT EXISTS answers(answer_id serial PRIMARY KEY, \
 			answer VARCHAR(100) NOT NULL, \
 			question VARCHAR(100) NOT NULL,\
+			question_id INT REFERENCES questions(question_id) ON DELETE CASCADE ,\
 			answer_date timestamp DEFAULT CURRENT_TIMESTAMP,\
 			user_id INT);")
 
