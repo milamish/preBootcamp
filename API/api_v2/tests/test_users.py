@@ -16,6 +16,7 @@ class Test_Users(unittest.TestCase):
 
 		
 	def test_Home(self):
+		home=json.dumps({"message":"you can post your question"})
 		self.assertEqual(app.test_client().get('/api/v1/',).status_code,200)
 
 	def test_login(self):
@@ -24,21 +25,23 @@ class Test_Users(unittest.TestCase):
 		sign_data=json.dumps({})
 
 	def test_unregistered_user_login(self):
-		not_a_user={ 'email':'not_a_user@example.com','password':'nope' }
-		res=app.test_client().post( '/api/v1/auth/login',data=not_a_user )
+		noneuser=json.dumps({"username":"militree","password":"Milamish8"})
+		header={"content-type":"application/json"}
+		res=app.test_client().post( '/api/v1/auth/login',data=noneuser, headers=header )
 		result = json.loads(res.data.decode())
-		self.assertEqual(res.status_code, 401)
-		self.assertEqual(result['message'], "Invalid email or password, Please try again")
+		self.assertEqual(res.status_code, 200)
+		self.assertEqual(result['message'], "your username is wrong")
 
 	def test_signedup(self):
-		sign_data=json.dumps({"username":"mish", "password":"Milamish"})
+		sign_data=json.dumps({"username":"Milamish", "password":"Milamish8", "emailaddress":"milamish@yahoo.com",
+		 "repeatpassword":"Milamish8", "name":"Mildred"})
 		header={"content-type":"application/json"}
-		signedin=app.test_client().post('/api/v1/auth/login',data=sign_data, headers=header)
-		response=signedin
+		signedin=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
+		result= json.loads(signedin.data.decode())
+		self.assertEqual(signedin.status_code, 200)
+		self.assertEqual(result['message'], "emailaddress exists")
+		
 
-	def test_signup(self):
-		response=(app.test_client().get('/api/v1/auth/signUp',).status_code,500)
-		respone2=(app.test_client().get('/api/v1/auth/signUp',).status_code,409)
 
 	'''def tearDown(self):
 		"""teardown all initialized variables."""
