@@ -31,7 +31,7 @@ class Test_Users(unittest.TestCase):
 		res=app.test_client().post( '/api/v1/auth/login',data=noneuser, headers=header )
 		result = json.loads(res.data.decode())
 		self.assertEqual(res.status_code, 500)
-		self.assertEqual(result['message'], "your username is wrong")
+		self.assertEqual(result['message'], "internal server error")
 
 	def test_signedup(self):
 		sign_data=json.dumps({"username":"Milamish", "password":"Milamish8", "emailaddress":"milamish@yahoo.com",
@@ -40,7 +40,7 @@ class Test_Users(unittest.TestCase):
 		signedup=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
 		result= json.loads(signedup.data.decode())
 		self.assertEqual(signedup.status_code, 500)
-		self.assertEqual(result['message'], "emailaddress exists")
+		self.assertEqual(result['message'], "unable to register")
 
 	def test_password_match(self):
 		password = "Milamish8"
