@@ -1,6 +1,7 @@
 from flask import *
 import unittest
 import json
+import re
 
 import os,sys
 sys.path.insert(0, os.path.abspath(".."))
@@ -36,11 +37,41 @@ class Test_Users(unittest.TestCase):
 		sign_data=json.dumps({"username":"Milamish", "password":"Milamish8", "emailaddress":"milamish@yahoo.com",
 		 "repeatpassword":"Milamish8", "name":"Mildred"})
 		header={"content-type":"application/json"}
-		signedin=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
-		result= json.loads(signedin.data.decode())
-		self.assertEqual(signedin.status_code, 200)
+		signedup=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
+		result= json.loads(signedup.data.decode())
+		self.assertEqual(signedup.status_code, 200)
 		self.assertEqual(result['message'], "emailaddress exists")
+
+	def test_password_match(self):
+		password = "Milamish8"
+		repeatpassword = "Milamish8"
+		sign_data=json.dumps({"password":"Milamish8","repeatpassword":"Milamish8",})
+		header={"content-type":"application/json"}
+		passwordmatch=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
+		result= json.loads(passwordmatch.data.decode())
+		self.assertTrue(password==repeatpassword, True)
 		
+	def test_password_characters(self):
+		password = "Milamish8"
+		length = len(password) < 9 or len(password) > 20
+		match= re.match('\d.*[A-Z]|[A-Z].*\d',password)
+		if len(password) < 9 or len(password) > 20:
+			return {"message":"password must be between 9 and 20 characters"}
+		if not re.match('\d.*[A-Z]|[A-Z].*\d', password):
+			return {"message":"password must contain a capital letter and a number"}
+
+		sign_data=json.dumps({"password":"Milamish9"})
+		header={"content-type":"application/json"}
+		passwordcharacter=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
+		result= json.loads(passwordcharacter.data.decode())
+		self.assertEqual(password==length, length)
+		self.assertEqual(password==match, False)
+
+		
+
+
+
+
 
 
 	'''def tearDown(self):
