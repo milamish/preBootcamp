@@ -45,27 +45,22 @@ class Test_Users(unittest.TestCase):
 	def test_password_match(self):
 		password = "Milamish8"
 		repeatpassword = "Milamish8"
-		sign_data=json.dumps({"password":"Milamish8","repeatpassword":"Milamish8",})
+		sign_data=json.dumps({"password":"Milamish8","repeatpassword":"Milamish8"})
 		header={"content-type":"application/json"}
 		passwordmatch=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
 		result= json.loads(passwordmatch.data.decode())
 		self.assertTrue(password==repeatpassword, True)
 		
 	def test_password_characters(self):
-		password = "Milamish8"
-		length = len(password) < 9 or len(password) > 20
+		password = "Milamish89"
+		length = (len(password) < 9 or len(password) > 20)
 		match= re.match('\d.*[A-Z]|[A-Z].*\d',password)
-		if len(password) < 9 or len(password) > 20:
-			return {"message":"password must be between 9 and 20 characters"}
-		if not re.match('\d.*[A-Z]|[A-Z].*\d', password):
-			return {"message":"password must contain a capital letter and a number"}
-
-		sign_data=json.dumps({"password":"Milamish9"})
+		sign_data=json.dumps({"password":"Milamish89"})
 		header={"content-type":"application/json"}
 		passwordcharacter=app.test_client().post('/api/v1/auth/signup',data=sign_data, headers=header)
 		result= json.loads(passwordcharacter.data.decode())
-		self.assertEqual(password==length, length)
-		self.assertEqual(password==match, False)
+		self.assertEqual(length, False)
+		self.assertEqual(match, match)
 
 		
 
