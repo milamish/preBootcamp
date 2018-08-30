@@ -37,9 +37,7 @@ class PostQuestion(Resource):
 			return{"message":"post a question"}
 				
 		try:
-			with connection.cursor() as cursor:
-				sql_query="INSERT INTO questions(question,user_id) VALUES(%s,%s);"
-				cursor.execute(sql_query,(question,user_id))
+			post_question(question,user_id)
 		except:
 			return{"message":"unable to post a question"}, 500
 		connection.commit()
@@ -56,10 +54,10 @@ class GetQuestion(Resource):
 		user_id=data['user_id']
 
 		try:
-			with connection.cursor() as cursor:
-				sql_get= "SELECT * FROM questions WHERE questions.question_id='"+str(question_id)+"';"
+			
+				get_question(question_id)
 				try:
-					cursor.execute(sql_get)
+					get_question(question_id)
 					result=cursor.fetchone()
 					if result is None:
 						return {"message":"question_id does not exist"}, 404
@@ -71,7 +69,7 @@ class GetQuestion(Resource):
 						return jsonify({"user_id":user_id, "question":question, "question_date":question_date, "question_id":question_id})
 				except:
 					return{"message": "unable to fetch entry"}, 500
-			connection.commit()
+				connection.commit()
 		finally:
 			pass
 api.add_resource(GetQuestion, '/api/v1/question/<int:question_id>')
@@ -82,21 +80,23 @@ class PostAnswer(Resource):
 	def post(self,question_id):
 		data = jwt.decode(request.headers.get('x-access-token'), app.config['SECRET_KEY'])
 		user_id=data['user_id']
-		question=request.get_json()['question']
 		answer=request.get_json()['answer']
 		if not answer:
 			return {"message":"post an answer"}
 		try:
-			with connection.cursor() as cursor:
-				sql_answer= "INSERT INTO answers(answer,question,user_id,question_id) VALUES(%s,%s,%s,%s);"
-				cursor.execute(sql_answer,(answer,question,user_id,question_id))
+			
+				get_question(question_id)
+				if cursor.fetchone() is None:
+					return {"message":"question does not exist"}, 404
+				else:
+					post_post_answer(answer, user_id, question_id)
 		except:
-			return{"message":"unable to post an answer"}, 500
+			return{"message":"the question does not exist"}, 500
 		connection.commit()
-		return {"question":question,"answer":answer, "user_id":user_id}, 200
+		return {"question_id":question_id,"answer":answer, "user_id":user_id}, 200
 api.add_resource(PostAnswer,'/api/v1/question/<int:question_id>/answer')
 
-#this class allows a user to retrieve all answers to a secific question using the question ID
+#this class allows a user to retrieve all answers to a specific question using the question ID
 class Getanswers(Resource):
 	@tokens
 	def get(self,question_id):
@@ -104,10 +104,9 @@ class Getanswers(Resource):
 		user_id=data['user_id']
 		
 		try:
-			with connection.cursor() as cursor:
-				sql_one="SELECT * FROM answers WHERE question_id ='"+str(question_id)+"';"
+				get_answers(question_id)
 				try:
-					cursor.execute(sql_one)
+					get_answers(question_id)
 					result=cursor.fetchall()
 					questions={}
 					if len(result)==0:
@@ -123,7 +122,7 @@ class Getanswers(Resource):
 						return jsonify(questions)
 				except:
 					return ({"message":"entry not found"}), 500
-			connection.commit()
+				connection.commit()
 		finally:
 			pass
 api.add_resource(Getanswers, '/api/v1/questions/<int:question_id>')
@@ -136,10 +135,9 @@ class AllQuestions(Resource):
 		user_id=data['user_id']
 
 		try:
-			with connection.cursor() as cursor:
-				sql_get_all= "SELECT * FROM questions;"
+				get_all_questions()
 				try:
-					cursor.execute(sql_get_all)
+					get_all_questions()
 					result=cursor.fetchall()
 					questions={}
 					if len(result)==0:
@@ -155,7 +153,7 @@ class AllQuestions(Resource):
 						return jsonify(questions)
 				except:
 					return jsonify({"message":"not found"}), 500
-			connection.commit()
+				connection.commit()
 		finally:
 			pass
 api.add_resource(AllQuestions, '/api/v1/questions')
@@ -167,35 +165,30 @@ class Modify(Resource):
 		data = jwt.decode(request.headers.get('x-access-token'), app.config['SECRET_KEY'])
 		user_id=data['user_id']
 		answer=request.get_json()['answer'].strip()
-		question=request.get_json()['question'].strip()
-		
-		with connection.cursor() as cursor:
-			cursor.execute("SELECT * FROM answers WHERE answers.question_id='"+str(question_id)+"' and answers.user_id ='"+str(user_id)+"'")
-			result=cursor.fetchone()
-			if result is not None:
-				sql_update="update answers SET answer ='"+answer+"', question ='"+question+"' WHERE question_id ='"+str(question_id)+"';"
-				cursor.execute(sql_update)
-			else:
-				return jsonify({"message":"entry does not exist"})	
+		get_user_id_and_question_id(question_id,user_id)
+		result=cursor.fetchone()
+		if result is not None:
+			modify_answer(question_id,answer)
+		else:
+			return jsonify({"message":"entry does not exist"})	
 		connection.commit()
-		return jsonify({"answer":answer, "question":question})
+		return jsonify({"answer":answer, "question_id":question_id})
 api.add_resource(Modify, '/api/v1/questions/<int:question_id>/answer')
 
 #this class allows authors of questions to delete their own questions
 class Remove(Resource):
+	@tokens
 	def delete(self,question_id):
 		data = jwt.decode(request.headers.get('x-access-token'), app.config['SECRET_KEY'])
 		user_id=data['user_id']
 		
 		try:
-			with connection.cursor() as cursor:
-				sql_del="DELETE FROM questions WHERE questions.question_id= '"+str(question_id)+"' and questions.user_id='"+str((user_id))+"';"
-				cursor.execute("SELECT * FROM questions WHERE questions.question_id = '"+str(question_id)+"' and questions.user_id='"+str((user_id))+"'")
+				get_user_id(question_id,user_id)
 				result=cursor.fetchone()
 				if result is None:
 					return {"message":"question does not exist"}, 404
 				else:
-					cursor.execute(sql_del)
+					delete_question(user_id, question_id)
 		except:
 			return {"message": "unable to delete question"}, 500
 		connection.commit()

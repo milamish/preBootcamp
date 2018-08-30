@@ -81,18 +81,16 @@ class Register(Resource):
 
 		if not re.match("[^@]+@[^@]+\.[^@]+", emailaddress):
 			return {"message":"email address not valid"}
+			
 		try:
-			with connection.cursor() as cursor:
-				sql="INSERT INTO users(name,emailaddress,password,username) VALUES\
-				('"+name+"','"+emailaddress+"','"+str(phash)+"','"+username+"');"
-				cursor.execute("SELECT * FROM  users WHERE username='"+username+"';");
-				if cursor.fetchone() is not None:
-					return{"message":"username taken"}, 409
-				cursor.execute("SELECT * FROM  users WHERE emailaddress='"+emailaddress+"';");
-				if cursor.fetchone() is not None:
-					return {"message":"emailaddress exists"}
-				else:
-					cursor.execute(sql)
+			check_username(username)
+			if cursor.fetchone() is not None:
+				return{"message":"username taken"}, 409
+			check_email_address(emailaddress)
+			if cursor.fetchone() is not None:
+				return {"message":"emailaddress exists"}
+			else:
+				register_user(name, username, emailaddress, phash)
 		except:
 			return {"message":"unable to register!"}, 500
 		connection.commit()
@@ -110,20 +108,18 @@ class Login(Resource):
 			return {"message":"please enter a username"}
 		if not password:
 			return {"message":"please enter a password"}
-		with connection.cursor() as cursor:
-			sql_log="SELECT * FROM  users WHERE username = '"+username+"'"
-			cursor.execute(sql_log)
-			result=cursor.fetchone()
-			if result is None :
+		check_username(username)
+		result=cursor.fetchone()
+		if result is None :
 
-				return {"message":"your username is wrong"}
-			else:
+			return {"message":"your username is wrong"}
+		else:
 			
-				if check_pwhash(password, result[4]):
-					token=jwt.encode({'username':username,'user_id':result[0],'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)},app.config['SECRET_KEY'])
-					return {"message":"succesfuly logged in",'token':token.decode ('UTF-8')}
-				else:
-					return {'message':'invalid password'}
+			if check_pwhash(password, result[4]):
+				token=jwt.encode({'username':username,'user_id':result[0],'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=60)},app.config['SECRET_KEY'])
+				return {"message":"succesfuly logged in",'token':token.decode ('UTF-8')}
+			else:
+				return {'message':'invalid password'}
 					
 		connection.commit()
 		return {"message":"check your login details"}

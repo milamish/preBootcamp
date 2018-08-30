@@ -12,5 +12,5 @@ from queries.views import queries
 from views import main
 
 app.register_blueprint(users)
-#app.register_blueprint(questions)
+app.register_blueprint(queries)
 app.register_blueprint(main)
